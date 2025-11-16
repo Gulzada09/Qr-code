@@ -1,9 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ортақ 3 топқа бөлу</title>
+<style>
+body { font-family: Arial; padding: 20px; }
+h1 { color: #333; }
+input { padding: 8px; width: 300px; margin-top: 10px; }
+button { padding: 8px 16px; font-size: 16px; cursor: pointer; margin-left: 10px; }
+table { border-collapse: collapse; width: 30%; float: left; margin-right: 2%; margin-top: 20px; }
+th, td { border: 1px solid #333; padding: 8px; text-align: left; vertical-align: top; }
+th { background-color: #f2f2f2; }
+td input { width: 90%; border: none; background: none; font-family: inherit; font-size: inherit; }
+</style>
+</head>
+<body>
+
+<h1>Барлық оқушылардың ортақ кестесі</h1>
+<input type="text" id="studentName" placeholder="Атыңызды енгізіңіз">
+<button id="assignBtn">Тобыңызды білу</button>
+
+<div id="tables">
+    <table id="arif"><tr><th>Арифметика</th></tr></table>
+    <table id="prog"><tr><th>Прогрессия</th></tr></table>
+    <table id="tizb"><tr><th>Тізбек</th></tr></table>
+</div>
+
+<!-- Firebase SDK (v12 модульдік) -->
 <script type="module">
-  // Firebase SDK импорттары
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
   import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-  // Firebase конфигурациясы
   const firebaseConfig = {
     apiKey: "AIzaSyDU1Y4OlxJCDES_TP24pVtuXvgnEauWdsE",
     authDomain: "gulzada-qr.firebaseapp.com",
@@ -15,28 +42,23 @@
     measurementId: "G-XDC3EJ392C"
   };
 
-  // Firebase инициализациясы
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // Топтар
   const groups = [
       {name:"Арифметика", element:document.getElementById("arif")},
       {name:"Прогрессия", element:document.getElementById("prog")},
       {name:"Тізбек", element:document.getElementById("tizb")}
   ];
 
-  // Рандом топ
   function getRandomGroup() {
       return groups[Math.floor(Math.random()*groups.length)].name;
   }
 
-  // Оқушыны қосу
   function assignGroup() {
       const input = document.getElementById("studentName");
       const name = input.value.trim();
       if(!name) { alert("Атыңызды енгізіңіз!"); return; }
-
       const groupName = getRandomGroup();
       push(ref(db, 'students'), {name: name, group: groupName});
       input.value = "";
@@ -47,7 +69,6 @@
       if(e.key === "Enter") assignGroup();
   });
 
-  // Реал-тайм кестені жаңарту
   const studentsRef = ref(db, 'students');
   onValue(studentsRef, snapshot => {
       const data = snapshot.val() || {};
@@ -72,3 +93,5 @@
   });
 
 </script>
+</body>
+</html>
