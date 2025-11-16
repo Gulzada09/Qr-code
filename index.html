@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Оқушыларды рандом топқа бөлу</title>
+</head>
+<body>
+<h1>Оқушыларды 3 топқа рандом бөлу</h1>
+
+<label>Оқушының аты-жөні:</label><br>
+<input type="text" id="studentName" placeholder="Атыңызды енгізіңіз">
+<button id="assignBtn">Тобыңызды білу</button>
+
+<div id="list"></div>
+
+<script>
+const groups = ["Арифметика", "Прогрессия", "Тізбек"];
+const assigned = [];
+
+function assignGroup() {
+    const input = document.getElementById("studentName");
+    const name = input.value.trim();
+    if(!name) { alert("Оқушының аты-жөнін енгізіңіз!"); return; }
+
+    const randomGroup = groups[Math.floor(Math.random()*groups.length)];
+    assigned.push({name, group: randomGroup});
+
+    const listDiv = document.getElementById("list");
+    listDiv.innerHTML = "";
+    assigned.forEach(s => {
+        listDiv.innerHTML += `<div>${s.name} → ${s.group}</div>`;
+    });
+
+    input.value = "";
+    input.focus();
+}
+
+document.getElementById("assignBtn").addEventListener("click", assignGroup);
+document.getElementById("studentName").addEventListener("keydown", function(e){
+    if(e.key === "Enter") assignGroup();
+});
+</script>
+</body>
+</html>
