@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Ортақ 3 топқа бөлу</title>
+<title>Ортақ 3 топқа бөлу (Admin)</title>
 <style>
 body { font-family: Arial; padding: 20px; }
 h1 { color: #333; }
@@ -12,13 +12,15 @@ table { border-collapse: collapse; width: 30%; float: left; margin-right: 2%; ma
 th, td { border: 1px solid #333; padding: 8px; text-align: left; vertical-align: top; }
 th { background-color: #f2f2f2; }
 td input { width: 90%; border: none; background: none; font-family: inherit; font-size: inherit; }
+#resetBtn { background:red; color:white; margin-top:20px; }
 </style>
 </head>
 <body>
 
-<h1>Барлық оқушылардың ортақ кестесі</h1>
+<h1>Барлық оқушылардың ортақ кестесі (Admin)</h1>
 <input type="text" id="studentName" placeholder="Атыңызды енгізіңіз">
 <button id="assignBtn">Тобыңызды білу</button>
+<button id="resetBtn">Қайтадан (Тек мұғалімге)</button>
 
 <div id="tables">
     <table id="arif"><tr><th>Арифметика</th></tr></table>
@@ -56,7 +58,6 @@ let groupPool = ["Арифметика","Арифметика","Арифмети
                  "Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия",
                  "Тізбек","Тізбек","Тізбек","Тізбек","Тізбек","Тізбек","Тізбек"];
 
-// Массивті рандом түрде араластыру (Fisher-Yates)
 function shuffle(array) {
     for (let i = array.length - 1; i > 0; i--) {
         let j = Math.floor(Math.random() * (i + 1));
@@ -85,7 +86,22 @@ document.getElementById("studentName").addEventListener("keydown", e => {
     if(e.key === "Enter") assignGroup();
 });
 
-// Firebase-тен realtime оқу
+// Қайтадан батырмасы
+document.getElementById("resetBtn").addEventListener("click", () => {
+    if(confirm("Барлық жазбаларды өшіргіңіз келеді ме?")) {
+        db.ref('students').remove()
+        .then(() => {
+            alert("Барлық жазбалар өшірілді!");
+            groupPool = ["Арифметика","Арифметика","Арифметика","Арифметика","Арифметика","Арифметика",
+                         "Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия",
+                         "Тізбек","Тізбек","Тізбек","Тізбек","Тізбек","Тізбек","Тізбек"];
+            shuffle(groupPool);
+        })
+        .catch(err => console.error(err));
+    }
+});
+
+// Firebase realtime кесте көрсету
 db.ref('students').on('value', snapshot => {
     const data = snapshot.val() || {};
     groups.forEach(g => g.element.innerHTML = `<tr><th>${g.name}</th></tr>`);
@@ -99,7 +115,6 @@ db.ref('students').on('value', snapshot => {
             const cell = row.insertCell(0);
             const input = document.createElement("input");
             input.value = `${i+1}. ${student}`;
-            // Оқушы аты өзгерсе Firebase-ке жазу
             input.addEventListener("change", function(){
                 const studentKey = Object.keys(data).find(k => data[k].name === student && data[k].group === g.name);
                 if(studentKey) db.ref('students/'+studentKey).update({name: this.value.replace(/^\d+\.\s*/, "")});
