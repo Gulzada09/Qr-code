@@ -1,84 +1,74 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Оқушыларды 3 топқа бөлу</title>
-<style>
-    body { font-family: Arial; padding: 20px; }
-    h1 { color: #333; }
-    input { padding: 8px; width: 300px; margin-top: 10px; }
-    button { padding: 8px 16px; margin-left: 10px; font-size: 16px; cursor: pointer; }
-    table { border-collapse: collapse; width: 30%; float: left; margin-right: 2%; margin-top: 20px; }
-    th, td { border: 1px solid #333; padding: 8px; text-align: left; vertical-align: top; }
-    th { background-color: #f2f2f2; }
-    td input { width: 90%; border: none; background: none; font-family: inherit; font-size: inherit; }
-</style>
-</head>
-<body>
+<script type="module">
+  // Firebase SDK импорттары
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+  import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
 
-<h1>Оқушыларды 3 топқа бөлу</h1>
+  // Firebase конфигурациясы
+  const firebaseConfig = {
+    apiKey: "AIzaSyDU1Y4OlxJCDES_TP24pVtuXvgnEauWdsE",
+    authDomain: "gulzada-qr.firebaseapp.com",
+    databaseURL: "https://gulzada-qr-default-rtdb.firebaseio.com",
+    projectId: "gulzada-qr",
+    storageBucket: "gulzada-qr.firebasestorage.app",
+    messagingSenderId: "1083785729714",
+    appId: "1:1083785729714:web:87846f485c72720e131bab",
+    measurementId: "G-XDC3EJ392C"
+  };
 
-<label>Оқушының аты-жөні:</label><br>
-<input type="text" id="studentName" placeholder="Атыңызды енгізіңіз">
-<button id="assignBtn">Тобыңызды білу</button>
+  // Firebase инициализациясы
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-<div id="tables">
-    <table id="arif"><tr><th>Арифметика</th></tr></table>
-    <table id="prog"><tr><th>Прогрессия</th></tr></table>
-    <table id="tizb"><tr><th>Тізбек</th></tr></table>
-</div>
+  // Топтар
+  const groups = [
+      {name:"Арифметика", element:document.getElementById("arif")},
+      {name:"Прогрессия", element:document.getElementById("prog")},
+      {name:"Тізбек", element:document.getElementById("tizb")}
+  ];
 
-<script>
-const groups = [
-    {name: "Арифметика", element: document.getElementById("arif"), students: []},
-    {name: "Прогрессия", element: document.getElementById("prog"), students: []},
-    {name: "Тізбек", element: document.getElementById("tizb"), students: []}
-];
+  // Рандом топ
+  function getRandomGroup() {
+      return groups[Math.floor(Math.random()*groups.length)].name;
+  }
 
-let totalStudents = 0;
-const MAX_STUDENTS = 20;
+  // Оқушыны қосу
+  function assignGroup() {
+      const input = document.getElementById("studentName");
+      const name = input.value.trim();
+      if(!name) { alert("Атыңызды енгізіңіз!"); return; }
 
-function updateTable(group) {
-    group.element.innerHTML = `<tr><th>${group.name}</th></tr>`;
-    group.students.forEach((student, index) => {
-        const row = group.element.insertRow();
-        const cell = row.insertCell(0);
-        const input = document.createElement("input");
-        input.value = `${index+1}. ${student}`;
-        input.addEventListener("change", function() {
-            // өзгеріс сақталады
-            group.students[index] = this.value.replace(/^\d+\.\s*/, "");
-            updateTable(group); // кестені жаңарту нумерациямен
-        });
-        cell.appendChild(input);
-    });
-}
+      const groupName = getRandomGroup();
+      push(ref(db, 'students'), {name: name, group: groupName});
+      input.value = "";
+  }
 
-function assignGroup() {
-    const input = document.getElementById("studentName");
-    let name = input.value.trim();
+  document.getElementById("assignBtn").addEventListener("click", assignGroup);
+  document.getElementById("studentName").addEventListener("keydown", e => {
+      if(e.key === "Enter") assignGroup();
+  });
 
-    if(!name) { alert("Атыңызды енгізіңіз!"); return; }
-    if(totalStudents >= MAX_STUDENTS) { alert("Барлық 20 оқушы енгізілді!"); return; }
+  // Реал-тайм кестені жаңарту
+  const studentsRef = ref(db, 'students');
+  onValue(studentsRef, snapshot => {
+      const data = snapshot.val() || {};
+      groups.forEach(g => g.element.innerHTML = `<tr><th>${g.name}</th></tr>`);
 
-    const maxPerGroup = Math.ceil(MAX_STUDENTS / 3);
-    const availableGroups = groups.filter(g => g.students.length < maxPerGroup);
-    const randomGroup = availableGroups[Math.floor(Math.random() * availableGroups.length)];
+      const groupData = { "Арифметика":[], "Прогрессия":[], "Тізбек":[] };
+      Object.values(data).forEach(s => groupData[s.group].push(s.name));
 
-    randomGroup.students.push(name);
-    updateTable(randomGroup);
+      groups.forEach(g => {
+          groupData[g.name].forEach((student, i) => {
+              const row = g.element.insertRow();
+              const cell = row.insertCell(0);
+              const input = document.createElement("input");
+              input.value = `${i+1}. ${student}`;
+              input.addEventListener("change", function(){
+                  const studentKey = Object.keys(data).find(k => data[k].name === student && data[k].group === g.name);
+                  if(studentKey) update(ref(db, 'students/'+studentKey), {name: this.value.replace(/^\d+\.\s*/, "")});
+              });
+              cell.appendChild(input);
+          });
+      });
+  });
 
-    totalStudents++;
-    input.value = "";
-    input.focus();
-}
-
-// Enter немесе батырма арқылы
-document.getElementById("assignBtn").addEventListener("click", assignGroup);
-document.getElementById("studentName").addEventListener("keydown", function(e){
-    if(e.key === "Enter") assignGroup();
-});
 </script>
-
-</body>
-</html>
