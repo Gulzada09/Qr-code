@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Ортақ 3 топқа бөлу</title>
+<style>
+body { font-family: Arial; padding: 20px; }
+h1 { color: #333; }
+input { padding: 8px; width: 300px; margin-top: 10px; }
+button { padding: 8px 16px; font-size: 16px; cursor: pointer; margin-left: 10px; }
+table { border-collapse: collapse; width: 30%; float: left; margin-right: 2%; margin-top: 20px; }
+th, td { border: 1px solid #333; padding: 8px; text-align: left; vertical-align: top; }
+th { background-color: #f2f2f2; }
+td input { width: 90%; border: none; background: none; font-family: inherit; font-size: inherit; }
+</style>
+</head>
+<body>
+
+<h1>Барлық оқушылардың ортақ кестесі</h1>
+<input type="text" id="studentName" placeholder="Атыңызды енгізіңіз">
+<button id="assignBtn">Тобыңызды білу</button>
+
+<div id="tables">
+    <table id="arif"><tr><th>Арифметика</th></tr></table>
+    <table id="prog"><tr><th>Прогрессия</th></tr></table>
+    <table id="tizb"><tr><th>Тізбек</th></tr></table>
+</div>
+
+<!-- Firebase SDK (CDN) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDU1Y4OlxJCDES_TP24pVtuXvgnEauWdsE",
+    authDomain: "gulzada-qr.firebaseapp.com",
+    databaseURL: "https://gulzada-qr-default-rtdb.firebaseio.com",
+    projectId: "gulzada-qr",
+    storageBucket: "gulzada-qr.firebasestorage.app",
+    messagingSenderId: "1083785729714",
+    appId: "1:1083785729714:web:87846f485c72720e131bab",
+    measurementId: "G-XDC3EJ392C"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+const groups = [
+    {name:"Арифметика", element:document.getElementById("arif")},
+    {name:"Прогрессия", element:document.getElementById("prog")},
+    {name:"Тізбек", element:document.getElementById("tizb")}
+];
+
+// 20 бала үшін топ пулын құру (6-7-7 немесе басқа комбинация)
+let groupPool = ["Арифметика","Арифметика","Арифметика","Арифметика","Арифметика","Арифметика",
+                 "Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия",
+                 "Тізбек","Тізбек","Тізбек","Тізбек","Тізбек","Тізбек","Тізбек"];
+
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+}
+shuffle(groupPool);
+
+function assignGroup() {
+    const input = document.getElementById("studentName");
+    const name = input.value.trim();
+    if(!name) { alert("Атыңызды енгізіңіз!"); return; }
+
+    if(groupPool.length === 0) { 
+        alert("Барлық топтар толық толды!"); 
+        return; 
+    }
+
+    const groupName = groupPool.pop();
+    db.ref('students').push({name: name, group: groupName});
+    input.value = "";
+}
+
+document.getElementById("assignBtn").addEventListener("click", assignGroup);
+document.getElementById("studentName").addEventListener("keydown", e => {
+    if(e.key === "Enter") assignGroup();
+});
+
+// Firebase realtime кесте көрсету
+db.ref('students').on('value', snapshot => {
+    const data = snapshot.val() || {};
+    groups.forEach(g => g.element.innerHTML = `<tr><th>${g.name}</th></tr>`);
+
+    const groupData = { "Арифметика":[], "Прогрессия":[], "Тізбек":[] };
+    Object.values(data).forEach(s => groupData[s.group].push(s.name));
+
+    groups.forEach(g => {
+        groupData[g.name].forEach((student, i) => {
+            const row = g.element.insertRow();
+            const cell = row.insertCell(0);
+            const input = document.createElement("input");
+            input.value = `${i+1}. ${student}`;
+            input.addEventListener("change", function(){
+                const studentKey = Object.keys(data).find(k => data[k].name === student && data[k].group === g.name);
+                if(studentKey) db.ref('students/'+studentKey).update({name: this.value.replace(/^\d+\.\s*/, "")});
+            });
+            cell.appendChild(input);
+        });
+    });
+});
+</script>
+</body>
+</html>
