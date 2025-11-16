@@ -51,15 +51,31 @@ const groups = [
     {name:"Тізбек", element:document.getElementById("tizb")}
 ];
 
-function getRandomGroup() {
-    return groups[Math.floor(Math.random()*groups.length)].name;
+// 20 бала үшін топ пулын құру (6-7-7 немесе басқа комбинация)
+let groupPool = ["Арифметика","Арифметика","Арифметика","Арифметика","Арифметика","Арифметика",
+                 "Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия","Прогрессия",
+                 "Тізбек","Тізбек","Тізбек","Тізбек","Тізбек","Тізбек","Тізбек"];
+
+// Массивті рандом түрде араластыру (Fisher-Yates)
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
 }
+shuffle(groupPool);
 
 function assignGroup() {
     const input = document.getElementById("studentName");
     const name = input.value.trim();
     if(!name) { alert("Атыңызды енгізіңіз!"); return; }
-    const groupName = getRandomGroup();
+
+    if(groupPool.length === 0) { 
+        alert("Барлық топтар толық толды!"); 
+        return; 
+    }
+
+    const groupName = groupPool.pop();
     db.ref('students').push({name: name, group: groupName});
     input.value = "";
 }
@@ -69,6 +85,7 @@ document.getElementById("studentName").addEventListener("keydown", e => {
     if(e.key === "Enter") assignGroup();
 });
 
+// Firebase-тен realtime оқу
 db.ref('students').on('value', snapshot => {
     const data = snapshot.val() || {};
     groups.forEach(g => g.element.innerHTML = `<tr><th>${g.name}</th></tr>`);
@@ -82,6 +99,7 @@ db.ref('students').on('value', snapshot => {
             const cell = row.insertCell(0);
             const input = document.createElement("input");
             input.value = `${i+1}. ${student}`;
+            // Оқушы аты өзгерсе Firebase-ке жазу
             input.addEventListener("change", function(){
                 const studentKey = Object.keys(data).find(k => data[k].name === student && data[k].group === g.name);
                 if(studentKey) db.ref('students/'+studentKey).update({name: this.value.replace(/^\d+\.\s*/, "")});
