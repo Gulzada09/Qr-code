@@ -2,43 +2,68 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Оқушыларды рандом топқа бөлу</title>
+<title>20 оқушыны 3 топқа бөлу</title>
+<style>
+    body { font-family: Arial; padding: 20px; }
+    h1 { color: #333; }
+    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+    th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    button { padding: 8px 16px; font-size: 16px; cursor: pointer; margin-top: 10px; }
+</style>
 </head>
 <body>
-<h1>Оқушыларды 3 топқа рандом бөлу</h1>
 
-<label>Оқушының аты-жөні:</label><br>
-<input type="text" id="studentName" placeholder="Атыңызды енгізіңіз">
-<button id="assignBtn">Тобыңызды білу</button>
+<h1>20 оқушыны 3 топқа бөлу</h1>
 
-<div id="list"></div>
+<button id="assignBtn">Топтарды рандом бөлу</button>
+
+<div id="tables"></div>
 
 <script>
+const students = [
+    "Айдана", "Ерасыл", "Жанайым", "Нұрсұлтан", "Аяжан", 
+    "Тілек", "Данияр", "Самал", "Әли", "Меруерт",
+    "Алишер", "Гүлнар", "Мұрат", "Айгерім", "Серік",
+    "Әлима", "Бақыт", "Жәнібек", "Айым", "Рауан"
+];
+
 const groups = ["Арифметика", "Прогрессия", "Тізбек"];
-const assigned = [];
 
-function assignGroup() {
-    const input = document.getElementById("studentName");
-    const name = input.value.trim();
-    if(!name) { alert("Оқушының аты-жөнін енгізіңіз!"); return; }
-
-    const randomGroup = groups[Math.floor(Math.random()*groups.length)];
-    assigned.push({name, group: randomGroup});
-
-    const listDiv = document.getElementById("list");
-    listDiv.innerHTML = "";
-    assigned.forEach(s => {
-        listDiv.innerHTML += `<div>${s.name} → ${s.group}</div>`;
-    });
-
-    input.value = "";
-    input.focus();
+function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
 }
 
-document.getElementById("assignBtn").addEventListener("click", assignGroup);
-document.getElementById("studentName").addEventListener("keydown", function(e){
-    if(e.key === "Enter") assignGroup();
+document.getElementById("assignBtn").addEventListener("click", function() {
+    shuffle(students); // оқушыларды рандом ету
+
+    const groupAssignment = { "Арифметика": [], "Прогрессия": [], "Тізбек": [] };
+
+    // Теңдей бөлу: 20 оқушы, 3 топ
+    let index = 0;
+    students.forEach(student => {
+        const group = groups[index % 3];
+        groupAssignment[group].push(student);
+        index++;
+    });
+
+    // Таблицаларды шығару
+    const tablesDiv = document.getElementById("tables");
+    tablesDiv.innerHTML = "";
+    for (const group of groups) {
+        let tableHTML = `<h2>${group}</h2>`;
+        tableHTML += `<table><tr><th>№</th><th>Аты-жөні</th></tr>`;
+        groupAssignment[group].forEach((student, i) => {
+            tableHTML += `<tr><td>${i + 1}</td><td>${student}</td></tr>`;
+        });
+        tableHTML += `</table>`;
+        tablesDiv.innerHTML += tableHTML;
+    }
 });
 </script>
+
 </body>
 </html>
