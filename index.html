@@ -2,16 +2,15 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>20 оқушыны 3 топқа бөлу</title>
+<title>Оқушыларды 3 топқа бөлу</title>
 <style>
     body { font-family: Arial; padding: 20px; }
     h1 { color: #333; }
     input { padding: 8px; width: 300px; margin-top: 10px; }
     button { padding: 8px 16px; margin-left: 10px; font-size: 16px; cursor: pointer; }
-    table { border-collapse: collapse; margin-top: 10px; width: 300px; float: left; margin-right: 20px; }
-    th, td { border: 1px solid #333; padding: 8px; text-align: left; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #333; padding: 8px; text-align: left; vertical-align: top; }
     th { background-color: #f2f2f2; }
-    .tables { overflow: hidden; margin-top: 20px; }
 </style>
 </head>
 <body>
@@ -22,20 +21,27 @@
 <input type="text" id="studentName" placeholder="Атыңызды енгізіңіз">
 <button id="assignBtn">Тобыңызды білу</button>
 
-<div class="tables">
-    <table id="group1"><tr><th>Арифметика</th></tr></table>
-    <table id="group2"><tr><th>Прогрессия</th></tr></table>
-    <table id="group3"><tr><th>Тізбек</th></tr></table>
-</div>
+<table id="groupTable">
+    <tr>
+        <th>Арифметика</th>
+        <th>Прогрессия</th>
+        <th>Тізбек</th>
+    </tr>
+    <tr>
+        <td id="arif"></td>
+        <td id="prog"></td>
+        <td id="tizb"></td>
+    </tr>
+</table>
 
 <script>
 const groups = [
-    {name: "Арифметика", table: document.getElementById("group1"), students: []},
-    {name: "Прогрессия", table: document.getElementById("group2"), students: []},
-    {name: "Тізбек", table: document.getElementById("group3"), students: []}
+    {name: "Арифметика", element: document.getElementById("arif"), students: []},
+    {name: "Прогрессия", element: document.getElementById("prog"), students: []},
+    {name: "Тізбек", element: document.getElementById("tizb"), students: []}
 ];
 
-let totalStudents = 0; // Жалпы енгізілген оқушылар саны
+let totalStudents = 0;
 const MAX_STUDENTS = 20;
 
 function assignGroup() {
@@ -45,15 +51,13 @@ function assignGroup() {
     if(!name) { alert("Атыңызды енгізіңіз!"); return; }
     if(totalStudents >= MAX_STUDENTS) { alert("Барлық 20 оқушы енгізілді!"); return; }
 
-    // Қолданыстағы топтардың саны бойынша рандом таңдау (теңдей болуға тырысу)
-    const availableGroups = groups.filter(g => g.students.length < Math.ceil(MAX_STUDENTS/3));
-    const randomIndex = Math.floor(Math.random() * availableGroups.length);
-    const group = availableGroups[randomIndex];
+    // Рандом топ таңдау, теңдей болуына тырысу
+    const maxPerGroup = Math.ceil(MAX_STUDENTS / 3);
+    const availableGroups = groups.filter(g => g.students.length < maxPerGroup);
+    const randomGroup = availableGroups[Math.floor(Math.random() * availableGroups.length)];
 
-    group.students.push(name);
-    const row = group.table.insertRow();
-    const cell = row.insertCell(0);
-    cell.innerText = name;
+    randomGroup.students.push(name);
+    randomGroup.element.innerHTML = randomGroup.students.join("<br>");
 
     totalStudents++;
     input.value = "";
