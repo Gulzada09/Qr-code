@@ -26,12 +26,12 @@ td input { width: 90%; border: none; background: none; font-family: inherit; fon
     <table id="tizb"><tr><th>Тізбек</th></tr></table>
 </div>
 
-<!-- Firebase SDK (v12 модульдік) -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-  import { getDatabase, ref, push, onValue, update } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+<!-- Firebase SDK (CDN) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
-  const firebaseConfig = {
+<script>
+const firebaseConfig = {
     apiKey: "AIzaSyDU1Y4OlxJCDES_TP24pVtuXvgnEauWdsE",
     authDomain: "gulzada-qr.firebaseapp.com",
     databaseURL: "https://gulzada-qr-default-rtdb.firebaseio.com",
@@ -40,58 +40,56 @@ td input { width: 90%; border: none; background: none; font-family: inherit; fon
     messagingSenderId: "1083785729714",
     appId: "1:1083785729714:web:87846f485c72720e131bab",
     measurementId: "G-XDC3EJ392C"
-  };
+};
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-  const groups = [
-      {name:"Арифметика", element:document.getElementById("arif")},
-      {name:"Прогрессия", element:document.getElementById("prog")},
-      {name:"Тізбек", element:document.getElementById("tizb")}
-  ];
+const groups = [
+    {name:"Арифметика", element:document.getElementById("arif")},
+    {name:"Прогрессия", element:document.getElementById("prog")},
+    {name:"Тізбек", element:document.getElementById("tizb")}
+];
 
-  function getRandomGroup() {
-      return groups[Math.floor(Math.random()*groups.length)].name;
-  }
+function getRandomGroup() {
+    return groups[Math.floor(Math.random()*groups.length)].name;
+}
 
-  function assignGroup() {
-      const input = document.getElementById("studentName");
-      const name = input.value.trim();
-      if(!name) { alert("Атыңызды енгізіңіз!"); return; }
-      const groupName = getRandomGroup();
-      push(ref(db, 'students'), {name: name, group: groupName});
-      input.value = "";
-  }
+function assignGroup() {
+    const input = document.getElementById("studentName");
+    const name = input.value.trim();
+    if(!name) { alert("Атыңызды енгізіңіз!"); return; }
+    const groupName = getRandomGroup();
+    db.ref('students').push({name: name, group: groupName});
+    input.value = "";
+}
 
-  document.getElementById("assignBtn").addEventListener("click", assignGroup);
-  document.getElementById("studentName").addEventListener("keydown", e => {
-      if(e.key === "Enter") assignGroup();
-  });
+document.getElementById("assignBtn").addEventListener("click", assignGroup);
+document.getElementById("studentName").addEventListener("keydown", e => {
+    if(e.key === "Enter") assignGroup();
+});
 
-  const studentsRef = ref(db, 'students');
-  onValue(studentsRef, snapshot => {
-      const data = snapshot.val() || {};
-      groups.forEach(g => g.element.innerHTML = `<tr><th>${g.name}</th></tr>`);
+db.ref('students').on('value', snapshot => {
+    const data = snapshot.val() || {};
+    groups.forEach(g => g.element.innerHTML = `<tr><th>${g.name}</th></tr>`);
 
-      const groupData = { "Арифметика":[], "Прогрессия":[], "Тізбек":[] };
-      Object.values(data).forEach(s => groupData[s.group].push(s.name));
+    const groupData = { "Арифметика":[], "Прогрессия":[], "Тізбек":[] };
+    Object.values(data).forEach(s => groupData[s.group].push(s.name));
 
-      groups.forEach(g => {
-          groupData[g.name].forEach((student, i) => {
-              const row = g.element.insertRow();
-              const cell = row.insertCell(0);
-              const input = document.createElement("input");
-              input.value = `${i+1}. ${student}`;
-              input.addEventListener("change", function(){
-                  const studentKey = Object.keys(data).find(k => data[k].name === student && data[k].group === g.name);
-                  if(studentKey) update(ref(db, 'students/'+studentKey), {name: this.value.replace(/^\d+\.\s*/, "")});
-              });
-              cell.appendChild(input);
-          });
-      });
-  });
-
+    groups.forEach(g => {
+        groupData[g.name].forEach((student, i) => {
+            const row = g.element.insertRow();
+            const cell = row.insertCell(0);
+            const input = document.createElement("input");
+            input.value = `${i+1}. ${student}`;
+            input.addEventListener("change", function(){
+                const studentKey = Object.keys(data).find(k => data[k].name === student && data[k].group === g.name);
+                if(studentKey) db.ref('students/'+studentKey).update({name: this.value.replace(/^\d+\.\s*/, "")});
+            });
+            cell.appendChild(input);
+        });
+    });
+});
 </script>
 </body>
 </html>
